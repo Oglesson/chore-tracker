@@ -123,7 +123,7 @@ describe('appReducer', () => {
   describe('LOAD_STATE', () => {
     it('replaces state entirely', () => {
       let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
-      const loaded: AppState = { children: [{ id: 'x1', name: 'Charlie', totalPoints: 50, rewardTarget: 100, entries: [] }] };
+      const loaded: AppState = { children: [{ id: 'x1', name: 'Charlie', totalPoints: 50, rewardTarget: 100, assignedChores: [], entries: [] }] };
       state = appReducer(state, { type: 'LOAD_STATE', payload: loaded });
       expect(state.children).toHaveLength(1);
       expect(state.children[0].name).toBe('Charlie');

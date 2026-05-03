@@ -5,6 +5,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ChoreScreen from '../screens/ChoreScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import ManageChildrenScreen from '../screens/ManageChildrenScreen';
+import ManageChoresScreen from '../screens/ManageChoresScreen';
 import ChildTabNavigator from './ChildTabNavigator';
 
 export type RootStackParamList = {
@@ -12,6 +13,7 @@ export type RootStackParamList = {
   Chores: { childId: string; childName: string };
   History: { childId: string; childName: string };
   ManageChildren: undefined;
+  ManageChores: { childId: string; childName: string };
   ChildView: { childId: string; childName: string };
 };
 
@@ -31,6 +33,7 @@ export default function AppNavigator() {
         <Stack.Screen name="Chores" component={ChoreScreen} options={({ route }) => ({ title: `${route.params.childName}'s Chores` })} />
         <Stack.Screen name="History" component={HistoryScreen} options={({ route }) => ({ title: `${route.params.childName}'s History` })} />
         <Stack.Screen name="ManageChildren" component={ManageChildrenScreen} options={{ title: 'Manage Children' }} />
+        <Stack.Screen name="ManageChores" component={ManageChoresScreen} options={({ route }) => ({ title: `${route.params.childName}'s Chores` })} />
         <Stack.Screen
           name="ChildView"
           component={ChildTabNavigator}

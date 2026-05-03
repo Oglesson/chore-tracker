@@ -9,17 +9,20 @@ import React, {
 import { v4 as uuidv4 } from 'uuid';
 import { AppState, AppAction, Child } from '../types';
 import { loadState, saveState } from '../storage/storage';
+import { CHORE_CATALOGUE } from '../constants/chores';
 
-const initialState: AppState = { children: [] };
+const initialState: AppState = { children: [], parentPin: '' };
 
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'LOAD_STATE':
       return {
         ...action.payload,
+        parentPin: action.payload.parentPin ?? '',
         children: action.payload.children.map((c) => ({
           ...c,
           rewardTarget: c.rewardTarget ?? 100,
+          assignedChores: c.assignedChores ?? CHORE_CATALOGUE,
           entries: c.entries.map((e) => ({
             ...e,
             verified: e.verified ?? true,
@@ -33,6 +36,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         name: action.payload.name.trim(),
         totalPoints: 0,
         rewardTarget: action.payload.rewardTarget,
+        assignedChores: [...CHORE_CATALOGUE],
         entries: [],
       };
       return { ...state, children: [...state.children, newChild] };
@@ -50,7 +54,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         children: state.children.map((child) => {
           if (child.id !== childId) return child;
-          const entry: import('../types').ChoreEntry = {
+          const entry = {
             id: uuidv4(),
             choreId: chore.id,
             completedAt: date,
@@ -84,7 +88,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'VERIFY_ENTRY': {
-      const { childId, entryId } = action.payload;
+      const { childId, entryId, points } = action.payload;
       return {
         ...state,
         children: state.children.map((child) => {
@@ -93,9 +97,9 @@ export function appReducer(state: AppState, action: AppAction): AppState {
           if (!entry || entry.verified) return child;
           return {
             ...child,
-            totalPoints: child.totalPoints + entry.points,
+            totalPoints: child.totalPoints + points,
             entries: child.entries.map((e) =>
-              e.id === entryId ? { ...e, verified: true } : e
+              e.id === entryId ? { ...e, verified: true, points } : e
             ),
           };
         }),
@@ -111,6 +115,51 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         ),
       };
     }
+
+    case 'ADD_CHORE': {
+      const { childId, label, points } = action.payload;
+      const newChore = { id: uuidv4(), label: label.trim(), points };
+      return {
+        ...state,
+        children: state.children.map((child) =>
+          child.id === childId
+            ? { ...child, assignedChores: [...child.assignedChores, newChore] }
+            : child
+        ),
+      };
+    }
+
+    case 'EDIT_CHORE': {
+      const { childId, chore } = action.payload;
+      return {
+        ...state,
+        children: state.children.map((child) =>
+          child.id === childId
+            ? {
+                ...child,
+                assignedChores: child.assignedChores.map((c) =>
+                  c.id === chore.id ? chore : c
+                ),
+              }
+            : child
+        ),
+      };
+    }
+
+    case 'REMOVE_CHORE': {
+      const { childId, choreId } = action.payload;
+      return {
+        ...state,
+        children: state.children.map((child) =>
+          child.id === childId
+            ? { ...child, assignedChores: child.assignedChores.filter((c) => c.id !== choreId) }
+            : child
+        ),
+      };
+    }
+
+    case 'SET_PARENT_PIN':
+      return { ...state, parentPin: action.payload.pin };
 
     default:
       return state;

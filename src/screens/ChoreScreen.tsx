@@ -3,8 +3,8 @@ import { View, FlatList, Text, StyleSheet, SafeAreaView } from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useAppContext } from '../context/AppContext';
 import ChoreItem from '../components/ChoreItem';
-import { CHORE_CATALOGUE } from '../constants/chores';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import EmptyState from '../components/EmptyState';
 
 type Route = RouteProp<RootStackParamList, 'Chores'>;
 
@@ -23,13 +23,13 @@ export default function ChoreScreen() {
   );
 
   function logChore(choreId: string) {
-    const chore = CHORE_CATALOGUE.find((c) => c.id === choreId);
+    const chore = child?.assignedChores.find((c) => c.id === choreId);
     if (!chore) return;
     dispatch({ type: 'LOG_CHORE', payload: { childId: params.childId, chore, date: today, verified: true } });
   }
 
   const totalToday = child?.entries
-    .filter((e) => e.completedAt === today)
+    .filter((e) => e.completedAt === today && e.verified)
     .reduce((sum, e) => sum + e.points, 0) ?? 0;
 
   return (
@@ -39,9 +39,10 @@ export default function ChoreScreen() {
         <Text style={styles.todayScore}>Today: {totalToday} pts</Text>
       </View>
       <FlatList
-        data={CHORE_CATALOGUE}
+        data={child?.assignedChores ?? []}
         keyExtractor={(c) => c.id}
         contentContainerStyle={styles.list}
+        ListEmptyComponent={<EmptyState message="No chores assigned. Tap 'Chores' to add some." />}
         renderItem={({ item }) => (
           <ChoreItem
             chore={item}

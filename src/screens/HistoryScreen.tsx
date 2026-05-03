@@ -1,17 +1,21 @@
-import React from 'react';
-import { View, SectionList, Text, TouchableOpacity, StyleSheet, SafeAreaView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  SectionList,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  Alert,
+} from 'react-native';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useAppContext } from '../context/AppContext';
 import EmptyState from '../components/EmptyState';
 import { ChoreEntry } from '../types';
-import { CHORE_CATALOGUE } from '../constants/chores';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
 type Route = RouteProp<RootStackParamList, 'History'>;
-
-function choreLabelById(id: string): string {
-  return CHORE_CATALOGUE.find((c) => c.id === id)?.label ?? id;
-}
 
 interface Section {
   title: string;
@@ -51,14 +55,31 @@ function buildSections(entries: ChoreEntry[]): Section[] {
 export default function HistoryScreen() {
   const { state, dispatch } = useAppContext();
   const { params } = useRoute<Route>();
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [approvePoints, setApprovePoints] = useState('');
 
   const child = state.children.find((c) => c.id === params.childId);
   const sections = buildSections(child?.entries ?? []);
 
+  function choreLabelById(choreId: string): string {
+    return child?.assignedChores.find((c) => c.id === choreId)?.label
+      ?? choreId;
+  }
+
+  function startApprove(entry: ChoreEntry) {
+    setApprovingId(entry.id);
+    setApprovePoints(String(entry.points));
+  }
+
+  function confirmApprove(entryId: string) {
+    const pts = parseInt(approvePoints, 10);
+    if (!(pts > 0)) return;
+    dispatch({ type: 'VERIFY_ENTRY', payload: { childId: params.childId, entryId, points: pts } });
+    setApprovingId(null);
+  }
+
   function confirmRemove(entryId: string, isVerified: boolean) {
-    const msg = isVerified
-      ? 'This will deduct the points.'
-      : 'This will discard the pending chore.';
+    const msg = isVerified ? 'This will deduct the points.' : 'This will discard the pending chore.';
     Alert.alert('Remove entry?', msg, [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -67,10 +88,6 @@ export default function HistoryScreen() {
         onPress: () => dispatch({ type: 'REMOVE_ENTRY', payload: { childId: params.childId, entryId } }),
       },
     ]);
-  }
-
-  function verifyEntry(entryId: string) {
-    dispatch({ type: 'VERIFY_ENTRY', payload: { childId: params.childId, entryId } });
   }
 
   return (
@@ -96,30 +113,50 @@ export default function HistoryScreen() {
         )}
         renderItem={({ item: entry, section }) =>
           section.isPending ? (
-            <View style={styles.pendingEntry}>
-              <Text style={styles.pendingLabel}>{choreLabelById(entry.choreId)}</Text>
-              <Text style={styles.pendingPts}>+{entry.points} pts</Text>
-              <TouchableOpacity
-                style={styles.approveBtn}
-                onPress={() => verifyEntry(entry.id)}
-              >
-                <Text style={styles.approveBtnText}>Approve</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.deleteBtn}
-                onPress={() => confirmRemove(entry.id, false)}
-              >
-                <Text style={styles.deleteText}>✕</Text>
-              </TouchableOpacity>
-            </View>
+            approvingId === entry.id ? (
+              <View style={styles.approveRow}>
+                <Text style={styles.approvingLabel}>{choreLabelById(entry.choreId)}</Text>
+                <TextInput
+                  style={styles.ptsInput}
+                  value={approvePoints}
+                  onChangeText={setApprovePoints}
+                  keyboardType="numeric"
+                  selectTextOnFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => confirmApprove(entry.id)}
+                  accessibilityLabel="Points to award"
+                />
+                <Text style={styles.ptsLabel}>pts</Text>
+                <TouchableOpacity
+                  style={styles.confirmBtn}
+                  onPress={() => confirmApprove(entry.id)}
+                >
+                  <Text style={styles.confirmBtnText}>✓</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.cancelInlineBtn}
+                  onPress={() => setApprovingId(null)}
+                >
+                  <Text style={styles.cancelInlineText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.pendingEntry}>
+                <Text style={styles.pendingLabel}>{choreLabelById(entry.choreId)}</Text>
+                <Text style={styles.pendingPts}>{entry.points} pts</Text>
+                <TouchableOpacity style={styles.approveBtn} onPress={() => startApprove(entry)}>
+                  <Text style={styles.approveBtnText}>Approve</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteBtn} onPress={() => confirmRemove(entry.id, false)}>
+                  <Text style={styles.deleteText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            )
           ) : (
             <View style={styles.entry}>
               <Text style={styles.entryLabel}>{choreLabelById(entry.choreId)}</Text>
               <Text style={styles.entryPoints}>+{entry.points}</Text>
-              <TouchableOpacity
-                onPress={() => confirmRemove(entry.id, true)}
-                style={styles.deleteBtn}
-              >
+              <TouchableOpacity onPress={() => confirmRemove(entry.id, true)} style={styles.deleteBtn}>
                 <Text style={styles.deleteText}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -172,6 +209,40 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   approveBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  approveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff8e1',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 4,
+    borderLeftWidth: 3,
+    borderLeftColor: '#4CAF50',
+    gap: 6,
+  },
+  approvingLabel: { flex: 1, fontSize: 14, color: '#1a1a2e', fontWeight: '500' },
+  ptsInput: {
+    width: 56,
+    borderWidth: 1,
+    borderColor: '#6C63FF',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#6C63FF',
+    textAlign: 'center',
+  },
+  ptsLabel: { fontSize: 13, color: '#888' },
+  confirmBtn: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  confirmBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  cancelInlineBtn: { padding: 4 },
+  cancelInlineText: { color: '#888', fontWeight: '600', fontSize: 15 },
   entry: {
     flexDirection: 'row',
     alignItems: 'center',

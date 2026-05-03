@@ -5,7 +5,6 @@ import { useAppContext } from '../../context/AppContext';
 import { ChildTabParamList } from '../../navigation/ChildTabNavigator';
 import ChoreItem from '../../components/ChoreItem';
 import EmptyState from '../../components/EmptyState';
-import { CHORE_CATALOGUE } from '../../constants/chores';
 
 type Route = RouteProp<ChildTabParamList, 'ChildChores'>;
 
@@ -27,7 +26,7 @@ export default function ChildChoresScreen() {
   const verifiedPoints = todayEntries.filter((e) => e.verified).reduce((s, e) => s + e.points, 0);
 
   function logChore(choreId: string) {
-    const chore = CHORE_CATALOGUE.find((c) => c.id === choreId);
+    const chore = child?.assignedChores.find((c) => c.id === choreId);
     if (!chore || !child) return;
     dispatch({ type: 'LOG_CHORE', payload: { childId, chore, date: today, verified: false } });
   }
@@ -41,9 +40,10 @@ export default function ChildChoresScreen() {
         <Text style={styles.todayScore}>Today: {verifiedPoints} pts</Text>
       </View>
       <FlatList
-        data={CHORE_CATALOGUE}
+        data={child.assignedChores}
         keyExtractor={(c) => c.id}
         contentContainerStyle={styles.list}
+        ListEmptyComponent={<EmptyState message="No chores assigned yet." />}
         renderItem={({ item }) => (
           <ChoreItem
             chore={item}

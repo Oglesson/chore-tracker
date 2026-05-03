@@ -4,7 +4,6 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import { useAppContext } from '../../context/AppContext';
 import { ChildTabParamList } from '../../navigation/ChildTabNavigator';
 import EmptyState from '../../components/EmptyState';
-import { CHORE_CATALOGUE } from '../../constants/chores';
 
 type Route = RouteProp<ChildTabParamList, 'ChildHistory'>;
 
@@ -15,7 +14,11 @@ export default function ChildHistoryScreen() {
   const child = state.children.find((c) => c.id === childId);
   if (!child) return <EmptyState message="Child not found." />;
 
-  const summary = CHORE_CATALOGUE.map((chore) => {
+  function choreLabelById(choreId: string): string {
+    return child!.assignedChores.find((c) => c.id === choreId)?.label ?? choreId;
+  }
+
+  const summary = child.assignedChores.map((chore) => {
     const verified = child.entries.filter((e) => e.choreId === chore.id && e.verified);
     const pending = child.entries.filter((e) => e.choreId === chore.id && !e.verified).length;
     return {
@@ -26,6 +29,25 @@ export default function ChildHistoryScreen() {
       totalPoints: verified.reduce((s, e) => s + e.points, 0),
     };
   }).filter((s) => s.count > 0 || s.pending > 0);
+
+  // Also include entries for chores that have since been removed
+  const knownChoreIds = new Set(child.assignedChores.map((c) => c.id));
+  const orphanedChoreIds = [...new Set(child.entries.map((e) => e.choreId))].filter(
+    (id) => !knownChoreIds.has(id)
+  );
+  for (const choreId of orphanedChoreIds) {
+    const verified = child.entries.filter((e) => e.choreId === choreId && e.verified);
+    const pending = child.entries.filter((e) => e.choreId === choreId && !e.verified).length;
+    if (verified.length > 0 || pending > 0) {
+      summary.push({
+        id: choreId,
+        label: choreLabelById(choreId),
+        count: verified.length,
+        pending,
+        totalPoints: verified.reduce((s, e) => s + e.points, 0),
+      });
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container}>

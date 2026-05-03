@@ -54,6 +54,34 @@ export default function ManageChildrenScreen() {
     setEditTargetId(null);
   }
 
+  function promptSetPin() {
+    const currentPin = state.parentPin ?? '';
+    const title = currentPin ? 'Change Parent PIN' : 'Set Parent PIN';
+    const msg = currentPin
+      ? 'Enter a new PIN (leave blank to remove PIN protection).'
+      : 'Set a numeric PIN to protect parent mode.';
+    Alert.alert(title, msg, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Set PIN',
+        onPress: () => {
+          // Cross-platform: use a simple inline form instead of Alert.prompt
+          // We repurpose the child add section temporarily — instead, open the inline PIN editor
+          setShowPinEditor(true);
+        },
+      },
+    ]);
+  }
+
+  const [showPinEditor, setShowPinEditor] = useState(false);
+  const [pinValue, setPinValue] = useState('');
+
+  function savePin() {
+    dispatch({ type: 'SET_PARENT_PIN', payload: { pin: pinValue.trim() } });
+    setPinValue('');
+    setShowPinEditor(false);
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.inner}>
@@ -84,11 +112,47 @@ export default function ManageChildrenScreen() {
           </View>
           <Text style={styles.hint}>Set a points goal — the child earns a reward when they reach it.</Text>
         </View>
+
+        {showPinEditor && (
+          <View style={styles.pinEditor}>
+            <Text style={styles.pinEditorTitle}>
+              {state.parentPin ? 'Change PIN (blank to remove)' : 'Set Parent PIN'}
+            </Text>
+            <View style={styles.pinRow}>
+              <TextInput
+                style={[styles.input, styles.pinInput]}
+                value={pinValue}
+                onChangeText={setPinValue}
+                keyboardType="number-pad"
+                secureTextEntry
+                placeholder="New PIN"
+                autoFocus
+                maxLength={8}
+                returnKeyType="done"
+                onSubmitEditing={savePin}
+              />
+              <TouchableOpacity style={styles.addBtn} onPress={savePin}>
+                <Text style={styles.addBtnText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelPinBtn} onPress={() => { setPinValue(''); setShowPinEditor(false); }}>
+                <Text style={styles.cancelPinText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         <FlatList
           data={state.children}
           keyExtractor={(c) => c.id}
           contentContainerStyle={styles.list}
           ListEmptyComponent={<EmptyState message="No children added yet." />}
+          ListHeaderComponent={
+            <TouchableOpacity style={styles.pinBtn} onPress={promptSetPin}>
+              <Text style={styles.pinBtnText}>
+                {state.parentPin ? '🔒 Change Parent PIN' : '🔓 Set Parent PIN'}
+              </Text>
+            </TouchableOpacity>
+          }
           renderItem={({ item }) => (
             <View style={styles.row}>
               <View style={styles.rowMain}>
@@ -138,12 +202,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
     paddingBottom: 10,
   },
-  inputRow: {
-    flexDirection: 'row',
-    padding: 16,
-    paddingBottom: 8,
-    gap: 8,
-  },
+  inputRow: { flexDirection: 'row', padding: 16, paddingBottom: 8, gap: 8 },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
@@ -151,6 +210,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 16,
+    backgroundColor: '#fff',
   },
   inputName: { flex: 1 },
   inputTarget: { width: 90, textAlign: 'center' },
@@ -163,18 +223,34 @@ const styles = StyleSheet.create({
   },
   addBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
   hint: { fontSize: 12, color: '#888', paddingHorizontal: 16, paddingBottom: 4 },
-  list: { padding: 16, flexGrow: 1 },
-  row: {
+  pinEditor: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    padding: 16,
+  },
+  pinEditorTitle: { fontSize: 14, fontWeight: '600', color: '#555', marginBottom: 10 },
+  pinRow: { flexDirection: 'row', gap: 8 },
+  pinInput: { flex: 1, textAlign: 'center', letterSpacing: 4 },
+  cancelPinBtn: {
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelPinText: { color: '#888', fontWeight: '600' },
+  pinBtn: {
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 14,
-    marginBottom: 8,
-  },
-  rowMain: {
-    flexDirection: 'row',
+    marginBottom: 12,
     alignItems: 'center',
-    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
+  pinBtnText: { color: '#6C63FF', fontWeight: '600', fontSize: 15 },
+  list: { padding: 16, flexGrow: 1 },
+  row: { backgroundColor: '#fff', borderRadius: 10, padding: 14, marginBottom: 8 },
+  rowMain: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   childName: { flex: 1, fontSize: 16, fontWeight: '500', color: '#1a1a2e' },
   pts: { fontSize: 14, color: '#6C63FF', fontWeight: '600' },
   rowSub: { flexDirection: 'row', alignItems: 'center' },

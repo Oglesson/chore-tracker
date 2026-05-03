@@ -4,29 +4,52 @@ import { Child } from '../types';
 
 interface Props {
   child: Child;
+  isParentMode: boolean;
   onLogChores: () => void;
   onViewHistory: () => void;
+  onManageChores: () => void;
   onChildView: () => void;
 }
 
-export default function ChildCard({ child, onLogChores, onViewHistory, onChildView }: Props) {
+export default function ChildCard({ child, isParentMode, onLogChores, onViewHistory, onManageChores, onChildView }: Props) {
+  const pendingCount = child.entries.filter((e) => !e.verified).length;
+
   return (
     <View style={styles.card}>
       <View style={styles.info}>
         <Text style={styles.name}>{child.name}</Text>
-        <Text style={styles.points}>{child.totalPoints} pts</Text>
+        <View style={styles.pointsBadge}>
+          <Text style={styles.points}>{child.totalPoints} pts</Text>
+          {pendingCount > 0 && (
+            <View style={styles.pendingBadge}>
+              <Text style={styles.pendingBadgeText}>{pendingCount} pending</Text>
+            </View>
+          )}
+        </View>
       </View>
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.btn} onPress={onLogChores}>
-          <Text style={styles.btnText}>Log Chores</Text>
+
+      {isParentMode ? (
+        <>
+          <View style={styles.actions}>
+            <TouchableOpacity style={styles.btn} onPress={onLogChores}>
+              <Text style={styles.btnText}>Log Chores</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onViewHistory}>
+              <Text style={[styles.btnText, styles.btnTextSecondary]}>History</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onManageChores}>
+              <Text style={[styles.btnText, styles.btnTextSecondary]}>Chores</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.childViewBtn} onPress={onChildView}>
+            <Text style={styles.childViewText}>Switch to {child.name}'s View</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <TouchableOpacity style={styles.btn} onPress={onChildView}>
+          <Text style={styles.btnText}>{child.name}'s View</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onViewHistory}>
-          <Text style={[styles.btnText, styles.btnTextSecondary]}>History</Text>
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity style={styles.childViewBtn} onPress={onChildView}>
-        <Text style={styles.childViewText}>Switch to {child.name}'s View</Text>
-      </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -50,8 +73,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   name: { fontSize: 18, fontWeight: '600', color: '#1a1a2e' },
+  pointsBadge: { alignItems: 'flex-end' },
   points: { fontSize: 20, fontWeight: '700', color: '#6C63FF' },
-  actions: { flexDirection: 'row', gap: 8 },
+  pendingBadge: {
+    marginTop: 2,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  pendingBadgeText: { fontSize: 11, color: '#B45309', fontWeight: '600' },
+  actions: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   btn: {
     flex: 1,
     backgroundColor: '#6C63FF',
@@ -63,7 +95,6 @@ const styles = StyleSheet.create({
   btnText: { color: '#fff', fontWeight: '600' },
   btnTextSecondary: { color: '#6C63FF' },
   childViewBtn: {
-    marginTop: 10,
     borderRadius: 8,
     paddingVertical: 8,
     alignItems: 'center',
