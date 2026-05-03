@@ -10,7 +10,7 @@ const emptyState: AppState = { children: [] };
 describe('appReducer', () => {
   describe('ADD_CHILD', () => {
     it('adds a child with zero points and empty entries', () => {
-      const state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
+      const state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
       expect(state.children).toHaveLength(1);
       expect(state.children[0].name).toBe('Alice');
       expect(state.children[0].totalPoints).toBe(0);
@@ -18,21 +18,21 @@ describe('appReducer', () => {
     });
 
     it('trims whitespace from name', () => {
-      const state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: '  Bob  ' } });
+      const state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: '  Bob  ', rewardTarget: 100 } });
       expect(state.children[0].name).toBe('Bob');
     });
 
     it('adds multiple children independently', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
-      state = appReducer(state, { type: 'ADD_CHILD', payload: { name: 'Bob' } });
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
+      state = appReducer(state, { type: 'ADD_CHILD', payload: { name: 'Bob', rewardTarget: 100 } });
       expect(state.children).toHaveLength(2);
     });
   });
 
   describe('REMOVE_CHILD', () => {
     it('removes the correct child', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
-      state = appReducer(state, { type: 'ADD_CHILD', payload: { name: 'Bob' } });
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
+      state = appReducer(state, { type: 'ADD_CHILD', payload: { name: 'Bob', rewardTarget: 100 } });
       const aliceId = state.children[0].id;
       state = appReducer(state, { type: 'REMOVE_CHILD', payload: { childId: aliceId } });
       expect(state.children).toHaveLength(1);
@@ -40,7 +40,7 @@ describe('appReducer', () => {
     });
 
     it('is a no-op for unknown childId', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
       state = appReducer(state, { type: 'REMOVE_CHILD', payload: { childId: 'nonexistent' } });
       expect(state.children).toHaveLength(1);
     });
@@ -48,9 +48,9 @@ describe('appReducer', () => {
 
   describe('LOG_CHORE', () => {
     it('adds an entry and increments totalPoints', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
       const childId = state.children[0].id;
-      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId, chore: makeBed, date: '2026-04-21' } });
+      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId, chore: makeBed, date: '2026-04-21', verified: true } });
       expect(state.children[0].totalPoints).toBe(makeBed.points);
       expect(state.children[0].entries).toHaveLength(1);
       expect(state.children[0].entries[0].choreId).toBe('make_bed');
@@ -58,35 +58,35 @@ describe('appReducer', () => {
     });
 
     it('accumulates points from multiple chores', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
       const childId = state.children[0].id;
-      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId, chore: makeBed, date: '2026-04-21' } });
-      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId, chore: washDishes, date: '2026-04-21' } });
+      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId, chore: makeBed, date: '2026-04-21', verified: true } });
+      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId, chore: washDishes, date: '2026-04-21', verified: true } });
       expect(state.children[0].totalPoints).toBe(makeBed.points + washDishes.points);
       expect(state.children[0].entries).toHaveLength(2);
     });
 
     it('only updates the targeted child', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
-      state = appReducer(state, { type: 'ADD_CHILD', payload: { name: 'Bob' } });
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
+      state = appReducer(state, { type: 'ADD_CHILD', payload: { name: 'Bob', rewardTarget: 100 } });
       const aliceId = state.children[0].id;
-      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId: aliceId, chore: makeBed, date: '2026-04-21' } });
+      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId: aliceId, chore: makeBed, date: '2026-04-21', verified: true } });
       expect(state.children[1].totalPoints).toBe(0);
       expect(state.children[1].entries).toHaveLength(0);
     });
 
     it('is a no-op for unknown childId', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
-      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId: 'ghost', chore: makeBed, date: '2026-04-21' } });
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
+      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId: 'ghost', chore: makeBed, date: '2026-04-21', verified: true } });
       expect(state.children[0].totalPoints).toBe(0);
     });
   });
 
   describe('REMOVE_ENTRY', () => {
     it('removes the entry and deducts points', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
       const childId = state.children[0].id;
-      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId, chore: makeBed, date: '2026-04-21' } });
+      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId, chore: makeBed, date: '2026-04-21', verified: true } });
       const entryId = state.children[0].entries[0].id;
       state = appReducer(state, { type: 'REMOVE_ENTRY', payload: { childId, entryId } });
       expect(state.children[0].entries).toHaveLength(0);
@@ -94,9 +94,9 @@ describe('appReducer', () => {
     });
 
     it('does not let totalPoints go below zero', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
       const childId = state.children[0].id;
-      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId, chore: makeBed, date: '2026-04-21' } });
+      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId, chore: makeBed, date: '2026-04-21', verified: true } });
       const entryId = state.children[0].entries[0].id;
       // Manually corrupt totalPoints to 0 before removing
       state = {
@@ -108,12 +108,12 @@ describe('appReducer', () => {
     });
 
     it('does not affect other children', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
-      state = appReducer(state, { type: 'ADD_CHILD', payload: { name: 'Bob' } });
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
+      state = appReducer(state, { type: 'ADD_CHILD', payload: { name: 'Bob', rewardTarget: 100 } });
       const aliceId = state.children[0].id;
       const bobId = state.children[1].id;
-      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId: aliceId, chore: makeBed, date: '2026-04-21' } });
-      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId: bobId, chore: washDishes, date: '2026-04-21' } });
+      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId: aliceId, chore: makeBed, date: '2026-04-21', verified: true } });
+      state = appReducer(state, { type: 'LOG_CHORE', payload: { childId: bobId, chore: washDishes, date: '2026-04-21', verified: true } });
       const aliceEntry = state.children[0].entries[0].id;
       state = appReducer(state, { type: 'REMOVE_ENTRY', payload: { childId: aliceId, entryId: aliceEntry } });
       expect(state.children[1].totalPoints).toBe(washDishes.points);
@@ -122,8 +122,8 @@ describe('appReducer', () => {
 
   describe('LOAD_STATE', () => {
     it('replaces state entirely', () => {
-      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice' } });
-      const loaded: AppState = { children: [{ id: 'x1', name: 'Charlie', totalPoints: 50, entries: [] }] };
+      let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
+      const loaded: AppState = { children: [{ id: 'x1', name: 'Charlie', totalPoints: 50, rewardTarget: 100, entries: [] }] };
       state = appReducer(state, { type: 'LOAD_STATE', payload: loaded });
       expect(state.children).toHaveLength(1);
       expect(state.children[0].name).toBe('Charlie');

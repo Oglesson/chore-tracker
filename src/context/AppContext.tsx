@@ -15,13 +15,24 @@ const initialState: AppState = { children: [] };
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'LOAD_STATE':
-      return action.payload;
+      return {
+        ...action.payload,
+        children: action.payload.children.map((c) => ({
+          ...c,
+          rewardTarget: c.rewardTarget ?? 100,
+          entries: c.entries.map((e) => ({
+            ...e,
+            verified: e.verified ?? true,
+          })),
+        })),
+      };
 
     case 'ADD_CHILD': {
       const newChild: Child = {
         id: uuidv4(),
         name: action.payload.name.trim(),
         totalPoints: 0,
+        rewardTarget: action.payload.rewardTarget,
         entries: [],
       };
       return { ...state, children: [...state.children, newChild] };
@@ -34,20 +45,21 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
 
     case 'LOG_CHORE': {
-      const { childId, chore, date } = action.payload;
+      const { childId, chore, date, verified } = action.payload;
       return {
         ...state,
         children: state.children.map((child) => {
           if (child.id !== childId) return child;
-          const entry = {
+          const entry: import('../types').ChoreEntry = {
             id: uuidv4(),
             choreId: chore.id,
             completedAt: date,
             points: chore.points,
+            verified,
           };
           return {
             ...child,
-            totalPoints: child.totalPoints + chore.points,
+            totalPoints: verified ? child.totalPoints + chore.points : child.totalPoints,
             entries: [...child.entries, entry],
           };
         }),
@@ -61,13 +73,42 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         children: state.children.map((child) => {
           if (child.id !== childId) return child;
           const removed = child.entries.find((e) => e.id === entryId);
-          const pointsLost = removed ? removed.points : 0;
+          const pointsLost = removed?.verified ? removed.points : 0;
           return {
             ...child,
             totalPoints: Math.max(0, child.totalPoints - pointsLost),
             entries: child.entries.filter((e) => e.id !== entryId),
           };
         }),
+      };
+    }
+
+    case 'VERIFY_ENTRY': {
+      const { childId, entryId } = action.payload;
+      return {
+        ...state,
+        children: state.children.map((child) => {
+          if (child.id !== childId) return child;
+          const entry = child.entries.find((e) => e.id === entryId);
+          if (!entry || entry.verified) return child;
+          return {
+            ...child,
+            totalPoints: child.totalPoints + entry.points,
+            entries: child.entries.map((e) =>
+              e.id === entryId ? { ...e, verified: true } : e
+            ),
+          };
+        }),
+      };
+    }
+
+    case 'SET_REWARD_TARGET': {
+      const { childId, rewardTarget } = action.payload;
+      return {
+        ...state,
+        children: state.children.map((child) =>
+          child.id === childId ? { ...child, rewardTarget } : child
+        ),
       };
     }
 

@@ -6,9 +6,10 @@ interface Props {
   child: Child;
   onLogChores: () => void;
   onViewHistory: () => void;
+  onChildView: () => void;
 }
 
-export default function ChildCard({ child, onLogChores, onViewHistory }: Props) {
+export default function ChildCard({ child, onLogChores, onViewHistory, onChildView }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.info}>
@@ -23,6 +24,9 @@ export default function ChildCard({ child, onLogChores, onViewHistory }: Props) 
           <Text style={[styles.btnText, styles.btnTextSecondary]}>History</Text>
         </TouchableOpacity>
       </View>
+      <TouchableOpacity style={styles.childViewBtn} onPress={onChildView}>
+        <Text style={styles.childViewText}>Switch to {child.name}'s View</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -58,4 +62,14 @@ const styles = StyleSheet.create({
   btnSecondary: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#6C63FF' },
   btnText: { color: '#fff', fontWeight: '600' },
   btnTextSecondary: { color: '#6C63FF' },
+  childViewBtn: {
+    marginTop: 10,
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+    backgroundColor: '#f0eeff',
+    borderWidth: 1,
+    borderColor: '#6C63FF',
+  },
+  childViewText: { color: '#6C63FF', fontWeight: '600', fontSize: 14 },
 });

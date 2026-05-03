@@ -25,6 +25,7 @@ export default function HomeScreen() {
             child={item}
             onLogChores={() => navigation.navigate('Chores', { childId: item.id, childName: item.name })}
             onViewHistory={() => navigation.navigate('History', { childId: item.id, childName: item.name })}
+            onChildView={() => navigation.navigate('ChildView', { childId: item.id, childName: item.name })}
           />
         )}
       />

@@ -25,7 +25,7 @@ export default function ChoreScreen() {
   function logChore(choreId: string) {
     const chore = CHORE_CATALOGUE.find((c) => c.id === choreId);
     if (!chore) return;
-    dispatch({ type: 'LOG_CHORE', payload: { childId: params.childId, chore, date: today } });
+    dispatch({ type: 'LOG_CHORE', payload: { childId: params.childId, chore, date: today, verified: true } });
   }
 
   const totalToday = child?.entries

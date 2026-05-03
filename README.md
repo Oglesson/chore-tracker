@@ -7,16 +7,16 @@ A React Native app built with Expo for tracking chores and points across multipl
 - **Manage children** — add and remove child profiles
 - **Log chores** — assign chores to children and award points
 - **Track history** — view completed chores with dates and points earned
-- **Persistent storage** — data is saved locally via AsyncStorage
+- **Persistent storage** — data is saved locally via AsyncStorage (initial implementation - this will need a central store forsharing with the family)
 
 ## Screens
 
-| Screen | Description |
-|---|---|
-| Home | Overview of all children and their total points |
-| Chores | Log a chore completion for a child |
-| History | View a child's chore history and remove entries |
-| Manage Children | Add or remove children |
+| Screen          | Description                                     |
+| --------------- | ----------------------------------------------- |
+| Home            | Overview of all children and their total points |
+| Chores          | Log a chore completion for a child              |
+| History         | View a child's chore history and remove entries |
+| Manage Children | Add or remove children                          |
 
 ## Getting Started
 
