@@ -17,12 +17,13 @@ export interface Child {
   name: string;
   totalPoints: number;
   rewardTarget: number;
-  assignedChores: ChoreDefinition[];
+  assignedChoreIds: string[];
   entries: ChoreEntry[];
 }
 
 export interface AppState {
   children: Child[];
+  choreCatalogue: ChoreDefinition[];
   parentPin?: string;
 }
 
@@ -34,7 +35,9 @@ export type AppAction =
   | { type: 'REMOVE_ENTRY'; payload: { childId: string; entryId: string } }
   | { type: 'VERIFY_ENTRY'; payload: { childId: string; entryId: string; points: number } }
   | { type: 'SET_REWARD_TARGET'; payload: { childId: string; rewardTarget: number } }
-  | { type: 'ADD_CHORE'; payload: { childId: string; label: string; points: number } }
-  | { type: 'EDIT_CHORE'; payload: { childId: string; chore: ChoreDefinition } }
-  | { type: 'REMOVE_CHORE'; payload: { childId: string; choreId: string } }
+  | { type: 'ADD_CATALOGUE_CHORE'; payload: { label: string; points: number } }
+  | { type: 'EDIT_CATALOGUE_CHORE'; payload: { chore: ChoreDefinition } }
+  | { type: 'REMOVE_CATALOGUE_CHORE'; payload: { choreId: string } }
+  | { type: 'ASSIGN_CHORE'; payload: { childId: string; choreId: string } }
+  | { type: 'UNASSIGN_CHORE'; payload: { childId: string; choreId: string } }
   | { type: 'SET_PARENT_PIN'; payload: { pin: string } };

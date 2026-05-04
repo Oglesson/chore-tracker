@@ -1,59 +1,17 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React from 'react';
 import { View, FlatList, TouchableOpacity, Text, StyleSheet, SafeAreaView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAppContext } from '../context/AppContext';
-import { useParentMode } from '../context/ParentModeContext';
 import ChildCard from '../components/ChildCard';
 import EmptyState from '../components/EmptyState';
-import PinModal from '../components/PinModal';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
-type Nav = StackNavigationProp<RootStackParamList, 'Home'>;
+type Nav = StackNavigationProp<RootStackParamList, 'ParentDashboard'>;
 
 export default function HomeScreen() {
   const { state } = useAppContext();
-  const { isParentMode, enterParentMode, exitParentMode } = useParentMode();
   const navigation = useNavigation<Nav>();
-  const [showPinModal, setShowPinModal] = useState(false);
-  const [pinError, setPinError] = useState(false);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          onPress={handleParentToggle}
-          style={styles.headerBtn}
-          accessibilityLabel={isParentMode ? 'Exit parent mode' : 'Enter parent mode'}
-        >
-          <Text style={styles.headerBtnText}>
-            {isParentMode ? '🔓 Exit' : '🔒 Parent'}
-          </Text>
-        </TouchableOpacity>
-      ),
-    });
-  }, [isParentMode, state.parentPin]);
-
-  function handleParentToggle() {
-    if (isParentMode) {
-      exitParentMode();
-    } else if (state.parentPin) {
-      setPinError(false);
-      setShowPinModal(true);
-    } else {
-      enterParentMode();
-    }
-  }
-
-  function handlePinSubmit(pin: string) {
-    const ok = enterParentMode(pin);
-    if (ok) {
-      setShowPinModal(false);
-      setPinError(false);
-    } else {
-      setPinError(true);
-    }
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -61,19 +19,25 @@ export default function HomeScreen() {
         data={state.children}
         keyExtractor={(c) => c.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={
-          <EmptyState
-            message={
-              isParentMode
-                ? 'No children yet. Tap + to add one.'
-                : 'No children added yet. Ask a parent to set up the app.'
-            }
-          />
+        ListHeaderComponent={
+          <TouchableOpacity
+            style={styles.catalogueBtn}
+            onPress={() => navigation.navigate('ManageCatalogue')}
+            accessibilityLabel="Manage chore catalogue"
+          >
+            <View style={styles.catalogueBtnContent}>
+              <Text style={styles.catalogueBtnTitle}>Chore Catalogue</Text>
+              <Text style={styles.catalogueBtnSubtitle}>
+                {state.choreCatalogue.length} chore{state.choreCatalogue.length !== 1 ? 's' : ''} defined
+              </Text>
+            </View>
+            <Text style={styles.catalogueArrow}>›</Text>
+          </TouchableOpacity>
         }
+        ListEmptyComponent={<EmptyState message="No children yet. Tap + to add one." />}
         renderItem={({ item }) => (
           <ChildCard
             child={item}
-            isParentMode={isParentMode}
             onLogChores={() => navigation.navigate('Chores', { childId: item.id, childName: item.name })}
             onViewHistory={() => navigation.navigate('History', { childId: item.id, childName: item.name })}
             onManageChores={() => navigation.navigate('ManageChores', { childId: item.id, childName: item.name })}
@@ -81,21 +45,13 @@ export default function HomeScreen() {
           />
         )}
       />
-      {isParentMode && (
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => navigation.navigate('ManageChildren')}
-          accessibilityLabel="Manage children"
-        >
-          <Text style={styles.fabText}>+</Text>
-        </TouchableOpacity>
-      )}
-      <PinModal
-        visible={showPinModal}
-        onSubmit={handlePinSubmit}
-        onCancel={() => { setShowPinModal(false); setPinError(false); }}
-        showError={pinError}
-      />
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('ManageChildren')}
+        accessibilityLabel="Manage children"
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -103,8 +59,25 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5fb' },
   list: { padding: 16, flexGrow: 1 },
-  headerBtn: { marginRight: 14, paddingVertical: 4 },
-  headerBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  catalogueBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#6C63FF',
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  catalogueBtnContent: { flex: 1 },
+  catalogueBtnTitle: { fontSize: 16, fontWeight: '600', color: '#1a1a2e' },
+  catalogueBtnSubtitle: { fontSize: 13, color: '#888', marginTop: 2 },
+  catalogueArrow: { fontSize: 22, color: '#ccc', marginLeft: 8 },
   fab: {
     position: 'absolute',
     right: 20,

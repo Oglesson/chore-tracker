@@ -4,14 +4,13 @@ import { Child } from '../types';
 
 interface Props {
   child: Child;
-  isParentMode: boolean;
   onLogChores: () => void;
   onViewHistory: () => void;
   onManageChores: () => void;
   onChildView: () => void;
 }
 
-export default function ChildCard({ child, isParentMode, onLogChores, onViewHistory, onManageChores, onChildView }: Props) {
+export default function ChildCard({ child, onLogChores, onViewHistory, onManageChores, onChildView }: Props) {
   const pendingCount = child.entries.filter((e) => !e.verified).length;
 
   return (
@@ -27,29 +26,20 @@ export default function ChildCard({ child, isParentMode, onLogChores, onViewHist
           )}
         </View>
       </View>
-
-      {isParentMode ? (
-        <>
-          <View style={styles.actions}>
-            <TouchableOpacity style={styles.btn} onPress={onLogChores}>
-              <Text style={styles.btnText}>Log Chores</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onViewHistory}>
-              <Text style={[styles.btnText, styles.btnTextSecondary]}>History</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onManageChores}>
-              <Text style={[styles.btnText, styles.btnTextSecondary]}>Chores</Text>
-            </TouchableOpacity>
-          </View>
-          <TouchableOpacity style={styles.childViewBtn} onPress={onChildView}>
-            <Text style={styles.childViewText}>Switch to {child.name}'s View</Text>
-          </TouchableOpacity>
-        </>
-      ) : (
-        <TouchableOpacity style={styles.btn} onPress={onChildView}>
-          <Text style={styles.btnText}>{child.name}'s View</Text>
+      <View style={styles.actions}>
+        <TouchableOpacity style={styles.btn} onPress={onLogChores}>
+          <Text style={styles.btnText}>Log Chores</Text>
         </TouchableOpacity>
-      )}
+        <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onViewHistory}>
+          <Text style={[styles.btnText, styles.btnTextSecondary]}>History</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.btn, styles.btnSecondary]} onPress={onManageChores}>
+          <Text style={[styles.btnText, styles.btnTextSecondary]}>Chores</Text>
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity style={styles.childViewBtn} onPress={onChildView}>
+        <Text style={styles.childViewText}>Switch to {child.name}'s View</Text>
+      </TouchableOpacity>
     </View>
   );
 }

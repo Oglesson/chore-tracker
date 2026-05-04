@@ -5,7 +5,8 @@ import { AppState } from '../src/types';
 const mockStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 
 const sampleState: AppState = {
-  children: [{ id: 'c1', name: 'Alice', totalPoints: 15, rewardTarget: 100, assignedChores: [], entries: [] }],
+  children: [{ id: 'c1', name: 'Alice', totalPoints: 15, rewardTarget: 100, assignedChoreIds: [], entries: [] }],
+  choreCatalogue: [],
 };
 
 beforeEach(() => {

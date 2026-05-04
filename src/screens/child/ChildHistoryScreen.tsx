@@ -15,39 +15,23 @@ export default function ChildHistoryScreen() {
   if (!child) return <EmptyState message="Child not found." />;
 
   function choreLabelById(choreId: string): string {
-    return child!.assignedChores.find((c) => c.id === choreId)?.label ?? choreId;
+    return state.choreCatalogue.find((c) => c.id === choreId)?.label ?? choreId;
   }
 
-  const summary = child.assignedChores.map((chore) => {
-    const verified = child.entries.filter((e) => e.choreId === chore.id && e.verified);
-    const pending = child.entries.filter((e) => e.choreId === chore.id && !e.verified).length;
+  // Aggregate all chore IDs that appear in entries
+  const choreIdsInEntries = [...new Set(child.entries.map((e) => e.choreId))];
+
+  const summary = choreIdsInEntries.map((choreId) => {
+    const verified = child.entries.filter((e) => e.choreId === choreId && e.verified);
+    const pending = child.entries.filter((e) => e.choreId === choreId && !e.verified).length;
     return {
-      id: chore.id,
-      label: chore.label,
+      id: choreId,
+      label: choreLabelById(choreId),
       count: verified.length,
       pending,
       totalPoints: verified.reduce((s, e) => s + e.points, 0),
     };
   }).filter((s) => s.count > 0 || s.pending > 0);
-
-  // Also include entries for chores that have since been removed
-  const knownChoreIds = new Set(child.assignedChores.map((c) => c.id));
-  const orphanedChoreIds = [...new Set(child.entries.map((e) => e.choreId))].filter(
-    (id) => !knownChoreIds.has(id)
-  );
-  for (const choreId of orphanedChoreIds) {
-    const verified = child.entries.filter((e) => e.choreId === choreId && e.verified);
-    const pending = child.entries.filter((e) => e.choreId === choreId && !e.verified).length;
-    if (verified.length > 0 || pending > 0) {
-      summary.push({
-        id: choreId,
-        label: choreLabelById(choreId),
-        count: verified.length,
-        pending,
-        totalPoints: verified.reduce((s, e) => s + e.points, 0),
-      });
-    }
-  }
 
   return (
     <SafeAreaView style={styles.container}>

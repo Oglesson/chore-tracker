@@ -5,7 +5,7 @@ import { CHORE_CATALOGUE } from '../src/constants/chores';
 const makeBed = CHORE_CATALOGUE.find((c) => c.id === 'make_bed')!;
 const washDishes = CHORE_CATALOGUE.find((c) => c.id === 'wash_dishes')!;
 
-const emptyState: AppState = { children: [] };
+const emptyState: AppState = { children: [], choreCatalogue: [] };
 
 describe('appReducer', () => {
   describe('ADD_CHILD', () => {
@@ -123,7 +123,7 @@ describe('appReducer', () => {
   describe('LOAD_STATE', () => {
     it('replaces state entirely', () => {
       let state = appReducer(emptyState, { type: 'ADD_CHILD', payload: { name: 'Alice', rewardTarget: 100 } });
-      const loaded: AppState = { children: [{ id: 'x1', name: 'Charlie', totalPoints: 50, rewardTarget: 100, assignedChores: [], entries: [] }] };
+      const loaded: AppState = { children: [{ id: 'x1', name: 'Charlie', totalPoints: 50, rewardTarget: 100, assignedChoreIds: [], entries: [] }], choreCatalogue: [] };
       state = appReducer(state, { type: 'LOAD_STATE', payload: loaded });
       expect(state.children).toHaveLength(1);
       expect(state.children[0].name).toBe('Charlie');

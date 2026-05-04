@@ -18,19 +18,24 @@ export default function ChoreScreen() {
   const today = todayISO();
 
   const child = state.children.find((c) => c.id === params.childId);
+  const assignedChores = state.choreCatalogue.filter((c) =>
+    child?.assignedChoreIds.includes(c.id)
+  );
+
   const loggedTodayIds = new Set(
     child?.entries.filter((e) => e.completedAt === today).map((e) => e.choreId) ?? []
   );
 
   function logChore(choreId: string) {
-    const chore = child?.assignedChores.find((c) => c.id === choreId);
+    const chore = state.choreCatalogue.find((c) => c.id === choreId);
     if (!chore) return;
     dispatch({ type: 'LOG_CHORE', payload: { childId: params.childId, chore, date: today, verified: true } });
   }
 
-  const totalToday = child?.entries
-    .filter((e) => e.completedAt === today && e.verified)
-    .reduce((sum, e) => sum + e.points, 0) ?? 0;
+  const totalToday =
+    child?.entries
+      .filter((e) => e.completedAt === today && e.verified)
+      .reduce((sum, e) => sum + e.points, 0) ?? 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -39,10 +44,12 @@ export default function ChoreScreen() {
         <Text style={styles.todayScore}>Today: {totalToday} pts</Text>
       </View>
       <FlatList
-        data={child?.assignedChores ?? []}
+        data={assignedChores}
         keyExtractor={(c) => c.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<EmptyState message="No chores assigned. Tap 'Chores' to add some." />}
+        ListEmptyComponent={
+          <EmptyState message="No chores assigned. Use 'Assign Chores' to set up this child's list." />
+        }
         renderItem={({ item }) => (
           <ChoreItem
             chore={item}

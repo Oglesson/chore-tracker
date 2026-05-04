@@ -11,24 +11,43 @@ import { AppState, AppAction, Child } from '../types';
 import { loadState, saveState } from '../storage/storage';
 import { CHORE_CATALOGUE } from '../constants/chores';
 
-const initialState: AppState = { children: [], parentPin: '' };
+const initialState: AppState = {
+  children: [],
+  choreCatalogue: [...CHORE_CATALOGUE],
+  parentPin: '',
+};
 
 export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
-    case 'LOAD_STATE':
+    case 'LOAD_STATE': {
+      const catalogue =
+        action.payload.choreCatalogue && action.payload.choreCatalogue.length > 0
+          ? action.payload.choreCatalogue
+          : CHORE_CATALOGUE;
+
       return {
         ...action.payload,
+        choreCatalogue: catalogue,
         parentPin: action.payload.parentPin ?? '',
-        children: action.payload.children.map((c) => ({
-          ...c,
-          rewardTarget: c.rewardTarget ?? 100,
-          assignedChores: c.assignedChores ?? CHORE_CATALOGUE,
-          entries: c.entries.map((e) => ({
-            ...e,
-            verified: e.verified ?? true,
-          })),
-        })),
+        children: action.payload.children.map((c) => {
+          // Migrate old assignedChores array → assignedChoreIds
+          const legacy = (c as any).assignedChores as Array<{ id: string }> | undefined;
+          const assignedChoreIds: string[] =
+            c.assignedChoreIds ??
+            (legacy ? legacy.map((ch) => ch.id) : catalogue.map((ch) => ch.id));
+
+          return {
+            ...c,
+            rewardTarget: c.rewardTarget ?? 100,
+            assignedChoreIds,
+            entries: c.entries.map((e) => ({
+              ...e,
+              verified: e.verified ?? true,
+            })),
+          };
+        }),
       };
+    }
 
     case 'ADD_CHILD': {
       const newChild: Child = {
@@ -36,7 +55,7 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         name: action.payload.name.trim(),
         totalPoints: 0,
         rewardTarget: action.payload.rewardTarget,
-        assignedChores: [...CHORE_CATALOGUE],
+        assignedChoreIds: state.choreCatalogue.map((c) => c.id),
         entries: [],
       };
       return { ...state, children: [...state.children, newChild] };
@@ -116,43 +135,56 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       };
     }
 
-    case 'ADD_CHORE': {
-      const { childId, label, points } = action.payload;
+    case 'ADD_CATALOGUE_CHORE': {
+      const { label, points } = action.payload;
       const newChore = { id: uuidv4(), label: label.trim(), points };
       return {
         ...state,
-        children: state.children.map((child) =>
-          child.id === childId
-            ? { ...child, assignedChores: [...child.assignedChores, newChore] }
-            : child
+        choreCatalogue: [...state.choreCatalogue, newChore],
+      };
+    }
+
+    case 'EDIT_CATALOGUE_CHORE': {
+      const { chore } = action.payload;
+      return {
+        ...state,
+        choreCatalogue: state.choreCatalogue.map((c) =>
+          c.id === chore.id ? chore : c
         ),
       };
     }
 
-    case 'EDIT_CHORE': {
-      const { childId, chore } = action.payload;
+    case 'REMOVE_CATALOGUE_CHORE': {
+      const { choreId } = action.payload;
+      return {
+        ...state,
+        choreCatalogue: state.choreCatalogue.filter((c) => c.id !== choreId),
+        children: state.children.map((child) => ({
+          ...child,
+          assignedChoreIds: child.assignedChoreIds.filter((id) => id !== choreId),
+        })),
+      };
+    }
+
+    case 'ASSIGN_CHORE': {
+      const { childId, choreId } = action.payload;
       return {
         ...state,
         children: state.children.map((child) =>
-          child.id === childId
-            ? {
-                ...child,
-                assignedChores: child.assignedChores.map((c) =>
-                  c.id === chore.id ? chore : c
-                ),
-              }
+          child.id === childId && !child.assignedChoreIds.includes(choreId)
+            ? { ...child, assignedChoreIds: [...child.assignedChoreIds, choreId] }
             : child
         ),
       };
     }
 
-    case 'REMOVE_CHORE': {
+    case 'UNASSIGN_CHORE': {
       const { childId, choreId } = action.payload;
       return {
         ...state,
         children: state.children.map((child) =>
           child.id === childId
-            ? { ...child, assignedChores: child.assignedChores.filter((c) => c.id !== choreId) }
+            ? { ...child, assignedChoreIds: child.assignedChoreIds.filter((id) => id !== choreId) }
             : child
         ),
       };

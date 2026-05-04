@@ -19,14 +19,17 @@ export default function ChildChoresScreen() {
   const child = state.children.find((c) => c.id === childId);
   const today = todayISO();
 
+  const assignedChores = state.choreCatalogue.filter((c) =>
+    child?.assignedChoreIds.includes(c.id)
+  );
+
   const todayEntries = child?.entries.filter((e) => e.completedAt === today) ?? [];
   const verifiedTodayIds = new Set(todayEntries.filter((e) => e.verified).map((e) => e.choreId));
   const pendingTodayIds = new Set(todayEntries.filter((e) => !e.verified).map((e) => e.choreId));
-
   const verifiedPoints = todayEntries.filter((e) => e.verified).reduce((s, e) => s + e.points, 0);
 
   function logChore(choreId: string) {
-    const chore = child?.assignedChores.find((c) => c.id === choreId);
+    const chore = state.choreCatalogue.find((c) => c.id === choreId);
     if (!chore || !child) return;
     dispatch({ type: 'LOG_CHORE', payload: { childId, chore, date: today, verified: false } });
   }
@@ -40,7 +43,7 @@ export default function ChildChoresScreen() {
         <Text style={styles.todayScore}>Today: {verifiedPoints} pts</Text>
       </View>
       <FlatList
-        data={child.assignedChores}
+        data={assignedChores}
         keyExtractor={(c) => c.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={<EmptyState message="No chores assigned yet." />}

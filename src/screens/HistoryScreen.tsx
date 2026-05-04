@@ -62,8 +62,7 @@ export default function HistoryScreen() {
   const sections = buildSections(child?.entries ?? []);
 
   function choreLabelById(choreId: string): string {
-    return child?.assignedChores.find((c) => c.id === choreId)?.label
-      ?? choreId;
+    return state.choreCatalogue.find((c) => c.id === choreId)?.label ?? choreId;
   }
 
   function startApprove(entry: ChoreEntry) {
