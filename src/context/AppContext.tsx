@@ -17,7 +17,7 @@ const initialState: AppState = {
   parentPin: '',
 };
 
-export function appReducer(state: AppState, action: AppAction): AppState {
+function appReducerCore(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'LOAD_STATE': {
       const catalogue =
@@ -193,9 +193,25 @@ export function appReducer(state: AppState, action: AppAction): AppState {
     case 'SET_PARENT_PIN':
       return { ...state, parentPin: action.payload.pin };
 
+    case 'EDIT_CHILD': {
+      const { childId, name, rewardTarget } = action.payload;
+      return {
+        ...state,
+        children: state.children.map((child) =>
+          child.id === childId ? { ...child, name: name.trim(), rewardTarget } : child
+        ),
+      };
+    }
+
     default:
       return state;
   }
+}
+
+export function appReducer(state: AppState, action: AppAction): AppState {
+  const next = appReducerCore(state, action);
+  if (action.type === 'LOAD_STATE') return next;
+  return { ...next, lastModifiedAt: Date.now() };
 }
 
 interface AppContextValue {

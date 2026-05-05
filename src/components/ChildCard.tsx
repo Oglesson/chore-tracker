@@ -8,15 +8,19 @@ interface Props {
   onViewHistory: () => void;
   onManageChores: () => void;
   onChildView: () => void;
+  onEdit: () => void;
 }
 
-export default function ChildCard({ child, onLogChores, onViewHistory, onManageChores, onChildView }: Props) {
+export default function ChildCard({ child, onLogChores, onViewHistory, onManageChores, onChildView, onEdit }: Props) {
   const pendingCount = child.entries.filter((e) => !e.verified).length;
 
   return (
     <View style={styles.card}>
-      <View style={styles.info}>
+      <View style={styles.header}>
         <Text style={styles.name}>{child.name}</Text>
+        <TouchableOpacity style={styles.editBtn} onPress={onEdit} accessibilityLabel={`Edit ${child.name}`}>
+          <Text style={styles.editIcon}>✏️</Text>
+        </TouchableOpacity>
         <View style={styles.pointsBadge}>
           <Text style={styles.points}>{child.totalPoints} pts</Text>
           {pendingCount > 0 && (
@@ -56,13 +60,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 3,
   },
-  info: {
+  header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  name: { fontSize: 18, fontWeight: '600', color: '#1a1a2e' },
+  name: { fontSize: 18, fontWeight: '600', color: '#1a1a2e', flex: 1 },
+  editBtn: { padding: 4, marginRight: 8 },
+  editIcon: { fontSize: 15 },
   pointsBadge: { alignItems: 'flex-end' },
   points: { fontSize: 20, fontWeight: '700', color: '#6C63FF' },
   pendingBadge: {

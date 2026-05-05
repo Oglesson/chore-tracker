@@ -17,7 +17,7 @@ const noop = () => {};
 describe('ChildCard', () => {
   it('renders child name and total points', () => {
     const { getByText } = render(
-      <ChildCard child={alice} onLogChores={noop} onViewHistory={noop} onManageChores={noop} onChildView={noop} />
+      <ChildCard child={alice} onLogChores={noop} onViewHistory={noop} onManageChores={noop} onChildView={noop} onEdit={noop} />
     );
     expect(getByText('Alice')).toBeTruthy();
     expect(getByText('35 pts')).toBeTruthy();

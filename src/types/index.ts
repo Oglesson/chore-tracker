@@ -25,6 +25,7 @@ export interface AppState {
   children: Child[];
   choreCatalogue: ChoreDefinition[];
   parentPin?: string;
+  lastModifiedAt?: number;
 }
 
 export type AppAction =
@@ -40,4 +41,5 @@ export type AppAction =
   | { type: 'REMOVE_CATALOGUE_CHORE'; payload: { choreId: string } }
   | { type: 'ASSIGN_CHORE'; payload: { childId: string; choreId: string } }
   | { type: 'UNASSIGN_CHORE'; payload: { childId: string; choreId: string } }
-  | { type: 'SET_PARENT_PIN'; payload: { pin: string } };
+  | { type: 'SET_PARENT_PIN'; payload: { pin: string } }
+  | { type: 'EDIT_CHILD'; payload: { childId: string; name: string; rewardTarget: number } };

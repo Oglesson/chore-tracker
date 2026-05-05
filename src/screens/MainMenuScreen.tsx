@@ -6,10 +6,13 @@ import {
   FlatList,
   StyleSheet,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAppContext } from '../context/AppContext';
+import { useSyncContext } from '../context/SyncContext';
+import { isFirebaseConfigured } from '../config/firebase';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import { Child } from '../types';
 
@@ -18,6 +21,18 @@ type Nav = StackNavigationProp<RootStackParamList, 'MainMenu'>;
 export default function MainMenuScreen() {
   const { state } = useAppContext();
   const navigation = useNavigation<Nav>();
+  const { familyCode, isOnline, leaveFamily } = useSyncContext();
+
+  function handleLeaveFamily() {
+    Alert.alert(
+      'Leave Family?',
+      'Your local data stays on this device, but it will no longer sync.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Leave', style: 'destructive', onPress: leaveFamily },
+      ],
+    );
+  }
 
   const totalPending = state.children.reduce(
     (sum, c) => sum + c.entries.filter((e) => !e.verified).length,
@@ -81,6 +96,19 @@ export default function MainMenuScreen() {
           </View>
         }
       />
+
+      {isFirebaseConfigured && familyCode && (
+        <View style={[styles.syncBar, !isOnline && styles.syncBarOffline]}>
+          <View style={[styles.syncDot, !isOnline && styles.syncDotOffline]} />
+          <Text style={styles.syncText}>
+            {isOnline ? 'Syncing' : 'Offline'} · Family code:{' '}
+            <Text style={styles.syncCode}>{familyCode}</Text>
+          </Text>
+          <TouchableOpacity onPress={handleLeaveFamily}>
+            <Text style={styles.leaveBtn}>Leave</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -152,4 +180,23 @@ const styles = StyleSheet.create({
   emptyContainer: { alignItems: 'center', paddingTop: 40 },
   emptyText: { fontSize: 16, color: '#888', marginBottom: 6 },
   emptyHint: { fontSize: 14, color: '#aaa' },
+  syncBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef0ff',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+  },
+  syncBarOffline: { backgroundColor: '#f5f5f5' },
+  syncDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+  },
+  syncDotOffline: { backgroundColor: '#aaa' },
+  syncText: { flex: 1, fontSize: 13, color: '#555' },
+  syncCode: { fontWeight: '700', color: '#6C63FF' },
+  leaveBtn: { fontSize: 13, color: '#e74c3c', fontWeight: '600' },
 });
