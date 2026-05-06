@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { initializeFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -20,3 +21,5 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 
 // experimentalForceLongPolling avoids WebSocket issues in some React Native environments
 export const db = initializeFirestore(app, { experimentalForceLongPolling: true });
+
+export const auth = getAuth(app);
